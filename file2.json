@@ -1,0 +1,139 @@
+{
+  "_index": "gpa-interface-response-logs-2026.06.07-000036",
+  "_id": "379eed9a-3a2a-4d02-afde-52ddf97518a8",
+  "_version": 1,
+  "_score": 0,
+  "_ignored": [
+    "logs.info.keyword"
+  ],
+  "_source": {
+    "environment": "DEV",
+    "module_name": "GPA-Listener",
+    "entity_name": "Az Storage Queue",
+    "entity_source": "User Interface",
+    "entity_target": "Database",
+    "interface_name": "gpa-pricing-fss-reallocation",
+    "interface_type": "Internal",
+    "start_time": "2026-07-02T11:15:21.6008458Z",
+    "end_time": "2026-07-02T11:15:22.9909995Z",
+    "time_stamp": "2026-07-02T11:15:21.6008458Z",
+    "key": "379eed9a-3a2a-4d02-afde-52ddf97518a8",
+    "logs": {
+      "info": "07/02/2026 11:15:21 :  Message Received.\n07/02/2026 11:15:21 :  Message Id  : 86a179aa-1fab-4135-a749-7e95cc010ac6\n07/02/2026 11:15:21 :  Message Details   :\n07/02/2026 11:15:21 :  ProcessName  :   gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 :  Reference Id  :   23089\n07/02/2026 11:15:21 :  Type  :   Pricing_Calculation\n07/02/2026 11:15:21 :  Triggered At  :   07/02/2026 07:15:20\n07/02/2026 11:15:21 :  Triggered By  :   pxb22706\n07/02/2026 11:15:21 :  Action  :   \n07/02/2026 11:15:21 :  ProcessType  :   oracle\n07/02/2026 11:15:21 :  Process Name : gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Calling Kubernetes API to create POD\n07/02/2026 11:15:22 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n",
+      "error": {
+        "type": "",
+        "message": ""
+      },
+      "warn": {
+        "type": "",
+        "message": ""
+      }
+    },
+    "run_time": "1.3901537",
+    "status": "Success",
+    "@timestamp": "2026-07-02T11:15:23.282700041+00:00"
+  },
+  "fields": {
+    "entity_source": [
+      "User Interface"
+    ],
+    "environment.keyword": [
+      "DEV"
+    ],
+    "logs.warn.message.keyword": [
+      ""
+    ],
+    "entity_name": [
+      "Az Storage Queue"
+    ],
+    "entity_target.keyword": [
+      "Database"
+    ],
+    "logs.error.message": [
+      ""
+    ],
+    "logs.warn.type": [
+      ""
+    ],
+    "status.keyword": [
+      "Success"
+    ],
+    "entity_target": [
+      "Database"
+    ],
+    "interface_name": [
+      "gpa-pricing-fss-reallocation"
+    ],
+    "key.keyword": [
+      "379eed9a-3a2a-4d02-afde-52ddf97518a8"
+    ],
+    "interface_type.keyword": [
+      "Internal"
+    ],
+    "logs.error.type": [
+      ""
+    ],
+    "module_name.keyword": [
+      "GPA-Listener"
+    ],
+    "logs.info": [
+      "07/02/2026 11:15:21 :  Message Received.\n07/02/2026 11:15:21 :  Message Id  : 86a179aa-1fab-4135-a749-7e95cc010ac6\n07/02/2026 11:15:21 :  Message Details   :\n07/02/2026 11:15:21 :  ProcessName  :   gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 :  Reference Id  :   23089\n07/02/2026 11:15:21 :  Type  :   Pricing_Calculation\n07/02/2026 11:15:21 :  Triggered At  :   07/02/2026 07:15:20\n07/02/2026 11:15:21 :  Triggered By  :   pxb22706\n07/02/2026 11:15:21 :  Action  :   \n07/02/2026 11:15:21 :  ProcessType  :   oracle\n07/02/2026 11:15:21 :  Process Name : gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Calling Kubernetes API to create POD\n07/02/2026 11:15:22 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n"
+    ],
+    "logs.warn.type.keyword": [
+      ""
+    ],
+    "interface_type": [
+      "Internal"
+    ],
+    "key": [
+      "379eed9a-3a2a-4d02-afde-52ddf97518a8"
+    ],
+    "entity_name.keyword": [
+      "Az Storage Queue"
+    ],
+    "run_time": [
+      1.3901536
+    ],
+    "time_stamp": [
+      "2026-07-02T11:15:21.600Z"
+    ],
+    "end_time": [
+      "2026-07-02T11:15:22.990Z"
+    ],
+    "logs.warn.message": [
+      ""
+    ],
+    "start_time": [
+      "2026-07-02T11:15:21.600Z"
+    ],
+    "environment": [
+      "DEV"
+    ],
+    "@timestamp": [
+      "2026-07-02T11:15:23.282Z"
+    ],
+    "logs.error.message.keyword": [
+      ""
+    ],
+    "logs.error.type.keyword": [
+      ""
+    ],
+    "module_name": [
+      "GPA-Listener"
+    ],
+    "entity_source.keyword": [
+      "User Interface"
+    ],
+    "interface_name.keyword": [
+      "gpa-pricing-fss-reallocation"
+    ],
+    "status": [
+      "Success"
+    ]
+  },
+  "ignored_field_values": {
+    "logs.info.keyword": [
+      "07/02/2026 11:15:21 :  Message Received.\n07/02/2026 11:15:21 :  Message Id  : 86a179aa-1fab-4135-a749-7e95cc010ac6\n07/02/2026 11:15:21 :  Message Details   :\n07/02/2026 11:15:21 :  ProcessName  :   gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 :  Reference Id  :   23089\n07/02/2026 11:15:21 :  Type  :   Pricing_Calculation\n07/02/2026 11:15:21 :  Triggered At  :   07/02/2026 07:15:20\n07/02/2026 11:15:21 :  Triggered By  :   pxb22706\n07/02/2026 11:15:21 :  Action  :   \n07/02/2026 11:15:21 :  ProcessType  :   oracle\n07/02/2026 11:15:21 :  Process Name : gpa-pricing-fss-reallocation\n07/02/2026 11:15:21 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Calling Kubernetes API to create POD\n07/02/2026 11:15:22 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 11:15:22 : Token request successful, parsing response\n07/02/2026 11:15:22 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n"
+    ]
+  }
+}

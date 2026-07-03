@@ -1,0 +1,139 @@
+{
+  "_index": "gpa-interface-response-logs-2026.06.07-000036",
+  "_id": "deb19fe4-6080-4905-909d-5aeb67a7300b",
+  "_version": 1,
+  "_score": 0,
+  "_ignored": [
+    "logs.info.keyword"
+  ],
+  "_source": {
+    "environment": "DEV",
+    "module_name": "GPA-Listener",
+    "entity_name": "Az Storage Queue",
+    "entity_source": "User Interface",
+    "entity_target": "Database",
+    "interface_name": "Calculation",
+    "interface_type": "Internal",
+    "start_time": "2026-07-02T10:40:49.7025514Z",
+    "end_time": "2026-07-02T10:40:51.1642129Z",
+    "time_stamp": "2026-07-02T10:40:49.7025514Z",
+    "key": "deb19fe4-6080-4905-909d-5aeb67a7300b",
+    "logs": {
+      "info": "07/02/2026 10:40:49 :  Message Received.\n07/02/2026 10:40:49 :  Message Id  : ded97d51-3cf8-4165-a7da-7560caa82efe\n07/02/2026 10:40:49 :  Message Details   :\n07/02/2026 10:40:49 :  ProcessName  :   Calculation\n07/02/2026 10:40:49 :  Reference Id  :   23129\n07/02/2026 10:40:49 :  Type  :   Pricing_Calculation\n07/02/2026 10:40:49 :  Triggered At  :   07/02/2026 06:40:47\n07/02/2026 10:40:49 :  Triggered By  :   axb74074\n07/02/2026 10:40:49 :  Action  :   -\n07/02/2026 10:40:49 :  ProcessType  :   microservice\n07/02/2026 10:40:49 :  Process Name : Calculation\n07/02/2026 10:40:49 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:50 : Token request successful, parsing response\n07/02/2026 10:40:50 :  Calling Kubernetes API to create POD\n07/02/2026 10:40:50 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:51 : Token request successful, parsing response\n07/02/2026 10:40:51 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n",
+      "error": {
+        "type": "",
+        "message": ""
+      },
+      "warn": {
+        "type": "",
+        "message": ""
+      }
+    },
+    "run_time": "1.4616615",
+    "status": "Success",
+    "@timestamp": "2026-07-02T10:40:52.283183945+00:00"
+  },
+  "fields": {
+    "entity_source": [
+      "User Interface"
+    ],
+    "environment.keyword": [
+      "DEV"
+    ],
+    "logs.warn.message.keyword": [
+      ""
+    ],
+    "entity_name": [
+      "Az Storage Queue"
+    ],
+    "entity_target.keyword": [
+      "Database"
+    ],
+    "logs.error.message": [
+      ""
+    ],
+    "logs.warn.type": [
+      ""
+    ],
+    "status.keyword": [
+      "Success"
+    ],
+    "entity_target": [
+      "Database"
+    ],
+    "interface_name": [
+      "Calculation"
+    ],
+    "key.keyword": [
+      "deb19fe4-6080-4905-909d-5aeb67a7300b"
+    ],
+    "interface_type.keyword": [
+      "Internal"
+    ],
+    "logs.error.type": [
+      ""
+    ],
+    "module_name.keyword": [
+      "GPA-Listener"
+    ],
+    "logs.info": [
+      "07/02/2026 10:40:49 :  Message Received.\n07/02/2026 10:40:49 :  Message Id  : ded97d51-3cf8-4165-a7da-7560caa82efe\n07/02/2026 10:40:49 :  Message Details   :\n07/02/2026 10:40:49 :  ProcessName  :   Calculation\n07/02/2026 10:40:49 :  Reference Id  :   23129\n07/02/2026 10:40:49 :  Type  :   Pricing_Calculation\n07/02/2026 10:40:49 :  Triggered At  :   07/02/2026 06:40:47\n07/02/2026 10:40:49 :  Triggered By  :   axb74074\n07/02/2026 10:40:49 :  Action  :   -\n07/02/2026 10:40:49 :  ProcessType  :   microservice\n07/02/2026 10:40:49 :  Process Name : Calculation\n07/02/2026 10:40:49 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:50 : Token request successful, parsing response\n07/02/2026 10:40:50 :  Calling Kubernetes API to create POD\n07/02/2026 10:40:50 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:51 : Token request successful, parsing response\n07/02/2026 10:40:51 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n"
+    ],
+    "logs.warn.type.keyword": [
+      ""
+    ],
+    "interface_type": [
+      "Internal"
+    ],
+    "key": [
+      "deb19fe4-6080-4905-909d-5aeb67a7300b"
+    ],
+    "entity_name.keyword": [
+      "Az Storage Queue"
+    ],
+    "run_time": [
+      1.4616615
+    ],
+    "time_stamp": [
+      "2026-07-02T10:40:49.702Z"
+    ],
+    "end_time": [
+      "2026-07-02T10:40:51.164Z"
+    ],
+    "logs.warn.message": [
+      ""
+    ],
+    "start_time": [
+      "2026-07-02T10:40:49.702Z"
+    ],
+    "environment": [
+      "DEV"
+    ],
+    "@timestamp": [
+      "2026-07-02T10:40:52.283Z"
+    ],
+    "logs.error.message.keyword": [
+      ""
+    ],
+    "logs.error.type.keyword": [
+      ""
+    ],
+    "module_name": [
+      "GPA-Listener"
+    ],
+    "entity_source.keyword": [
+      "User Interface"
+    ],
+    "interface_name.keyword": [
+      "Calculation"
+    ],
+    "status": [
+      "Success"
+    ]
+  },
+  "ignored_field_values": {
+    "logs.info.keyword": [
+      "07/02/2026 10:40:49 :  Message Received.\n07/02/2026 10:40:49 :  Message Id  : ded97d51-3cf8-4165-a7da-7560caa82efe\n07/02/2026 10:40:49 :  Message Details   :\n07/02/2026 10:40:49 :  ProcessName  :   Calculation\n07/02/2026 10:40:49 :  Reference Id  :   23129\n07/02/2026 10:40:49 :  Type  :   Pricing_Calculation\n07/02/2026 10:40:49 :  Triggered At  :   07/02/2026 06:40:47\n07/02/2026 10:40:49 :  Triggered By  :   axb74074\n07/02/2026 10:40:49 :  Action  :   -\n07/02/2026 10:40:49 :  ProcessType  :   microservice\n07/02/2026 10:40:49 :  Process Name : Calculation\n07/02/2026 10:40:49 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:50 : Token request successful, parsing response\n07/02/2026 10:40:50 :  Calling Kubernetes API to create POD\n07/02/2026 10:40:50 : Requesting access token from Microsoft OAuth2 endpoint\n07/02/2026 10:40:51 : Token request successful, parsing response\n07/02/2026 10:40:51 :  Received success response from API. Status Code : [Created]. POC CREATED SUCCESSFULLY\n"
+    ]
+  }
+}
