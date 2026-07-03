@@ -1,0 +1,91 @@
+createJobTemplate:
+  apiVersion: batch/v1
+  kind: Pod
+  metadata:
+    name: omam-connectivity-report-dev
+    namespace: omam-devtest
+    labels:
+      app: omam-connectivity-report
+      deployment: v1
+      environment: dev
+  spec:
+    ttlSecondsAfterFinished: 20
+    backoffLimit: 0
+    template:
+      metadata:
+        name: omam-connectivity-report
+        namespace: omam-devtest
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: omam-interface-container
+            args:
+              - '-c'
+              - sleep 259200000
+            command:
+              - /bin/sh
+            image: ghcr.io/gsk-tech/omam/py-awx-non-root:20260128.1
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: global_config_path
+                value: /etc/configs
+            volumeMounts:
+              - mountPath: /opt/exit-signals
+                name: exit-signals
+              - mountPath: /etc/configs
+                name: omam-global-json-dev
+              - mountPath: /etc/certificates
+                name: cars-saas-cert-dev
+              - mountPath: /home/interface/logs
+                name: logs-dir
+              - mountPath: /home/interface/keyvault
+                name: modeln-cert
+          - name: fluentd
+            image: ghcr.io/gsk-tech/cars-saas/fluentd-elk:v1
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: FLUENT_UID
+                value: '0'
+            volumeMounts:
+              - mountPath: /etc/certificates
+                name: cars-saas-cert-dev
+              - mountPath: /fluentd/etc/fluent.conf
+                subPath: fluent.conf
+                name: fluentd-config
+              - mountPath: /home/interface/logs
+                name: logs-dir
+              - name: exit-signals
+                mountPath: /opt/exit-signals
+            command:
+              - /bin/sh
+              - '-c'
+            args:
+              - |
+                fluentd -c /fluentd/etc/fluent.conf &
+                until [ -f /opt/exit-signals/exit ]
+                do
+                  sleep 5
+                done
+                echo "Exiting Side car Container"
+                exit 0
+        imagePullSecrets:
+          - name: omamgitpull
+        volumes:
+          - name: cars-saas-cert-dev
+            secret:
+              defaultMode: 420
+              secretName: omam-cer-pfx-key-dev
+          - name: fluentd-config
+            secret:
+              defaultMode: 420
+              secretName: fluentd-config-dev
+          - name: omam-global-json-dev
+            secret:
+              defaultMode: 420
+              secretName: omam-global-json-dev
+          - emptyDir: {}
+            name: logs-dir
+          - emptyDir: {}
+            name: modeln-cert
+          - emptyDir: {}
+            name: exit-signals
