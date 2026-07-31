@@ -1,0 +1,685 @@
+/usr/local/lib/python3.8/site-packages/paramiko/transport.py:236: CryptographyDeprecationWarning: Blowfish has been deprecated
+  "class": algorithms.Blowfish,
+[WARNING]: Found variable using reserved name: namespace
+
+PLAY [all] *********************************************************************
+
+TASK [Parse Json values] *******************************************************
+ok: [localhost]
+
+TASK [Assign Values to variable] ***********************************************
+ok: [localhost]
+
+TASK [Fetch Azure AD Bearer Token using client_credentials flow] ***************
+ok: [localhost]
+
+TASK [Set Bearer Token from Azure AD response] *********************************
+ok: [localhost]
+
+TASK [Run scheduled job pre tasks] *********************************************
+
+TASK [Set Jop Enviroment details of the job] ***********************************
+
+TASK [setenv : SET ENVIRONMENT] ************************************************
+ok: [localhost]
+
+TASK [Check AWX Downtime] ******************************************************
+
+TASK [Checking AWX Downtime] ***************************************************
+
+TASK [dbselect : Processing SQL statments] *************************************
+ok: [localhost]
+
+TASK [checkdowntime : Process exception result] ********************************
+ok: [localhost]
+
+TASK [checkdowntime : Stop the job when current time is AWX downtime] **********
+skipping: [localhost]
+
+TASK [checkdowntime : Stop the job when current time is AWX downtime] **********
+skipping: [localhost]
+
+TASK [Check current date and time belongs job running time interval] ***********
+skipping: [localhost]
+
+TASK [Checking wether we can run same script multiple times] *******************
+skipping: [localhost]
+
+TASK [Update the job status as running] ****************************************
+
+TASK [dbupdate : Insert log data] **********************************************
+changed: [localhost]
+
+TASK [dbupdate : Updated new status to Job table] ******************************
+ok: [localhost]
+
+TASK [dbupdate : Notify child jobs about parent jobs run status] ***************
+skipping: [localhost]
+
+TASK [dbupdate : To Make sure current job wait for parant job to run] **********
+skipping: [localhost]
+
+TASK [Call kubernetes] *********************************************************
+included: /runner/project/awxjobtemplate/scheduler/dev/kubelet_api_job_create.yml for localhost
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "createJobTemplate": {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+            "labels": {
+                "app": "ui-aamp-alerts",
+                "deployment": "v1",
+                "environment": "dev"
+            },
+            "name": "ui-aamp-alerts-dev",
+            "namespace": "ph-gpa"
+        },
+        "spec": {
+            "backoffLimit": 0,
+            "template": {
+                "metadata": {
+                    "name": "ui-aamp-alerts",
+                    "namespace": "ph-gpa"
+                },
+                "spec": {
+                    "containers": [
+                        {
+                            "args": [
+                                "-c",
+                                "python /usr/src/interface/Interface/Python/Interfaces/Ui_Aamp_Alerts/Ui_Aamp_alerts.py\\nexit_code=$?\\nif [ $exit_code -ne 0 ]\\nthen\\n  echo -n \\"success\\" > /opt/exit-signals/exit\\nelse\\n  echo -n \\"failure\\" >  /opt/exit-signals/exit\\nfi\\nexit $exit_code\\n"
+                            ],
+                            "command": [
+                                "/bin/sh"
+                            ],
+                            "env": [
+                                {
+                                    "name": "global_config_path",
+                                    "value": "/etc/configs"
+                                }
+                            ],
+                            "image": "ghcr.io/gsk-tech/gpa/py-inter-awx-non-root:20260729.2@sha256:c28829761d4838427cf9b50f9b375759bf8ffef1287f1a9e0969a0acd4abab0a",
+                            "imagePullPolicy": "IfNotPresent",
+                            "name": "gpa-interface-container",
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/opt/exit-signals",
+                                    "name": "exit-signals"
+                                },
+                                {
+                                    "mountPath": "/etc/certificates",
+                                    "name": "gpa-privatekey-crt-dev",
+                                    "readOnly": true
+                                },
+                                {
+                                    "mountPath": "/etc/configs",
+                                    "name": "gpa-global-json-dev",
+                                    "readOnly": true
+                                },
+                                {
+                                    "mountPath": "/home/interface/logs",
+                                    "name": "logs-dir"
+                                },
+                                {
+                                    "mountPath": "/home/interface/keyvault",
+                                    "name": "modeln-cert"
+                                }
+                            ]
+                        },
+                        {
+                            "args": [
+                                "fluentd -c /fluentd/etc/fluent.conf &\\nuntil [ -f /opt/exit-signals/exit ]\\ndo\\n  sleep 5\\ndone\\necho \\"Exiting Side car Container\\"\\nexit 0\\n"
+                            ],
+                            "command": [
+                                "/bin/sh",
+                                "-c"
+                            ],
+                            "env": [
+                                {
+                                    "name": "FLUENT_UID",
+                                    "value": "0"
+                                }
+                            ],
+                            "image": "ghcr.io/gsk-tech/gpa/fluentd-elk:v1",
+                            "imagePullPolicy": "IfNotPresent",
+                            "name": "fluentd",
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/etc/certificates",
+                                    "name": "gpa-privatekey-crt-dev",
+                                    "readOnly": true
+                                },
+                                {
+                                    "mountPath": "/fluentd/etc/fluent.conf",
+                                    "name": "fluentd-config",
+                                    "subPath": "fluent.conf"
+                                },
+                                {
+                                    "mountPath": "/home/interface/logs",
+                                    "name": "logs-dir"
+                                },
+                                {
+                                    "mountPath": "/opt/exit-signals",
+                                    "name": "exit-signals"
+                                }
+                            ]
+                        }
+                    ],
+                    "imagePullSecrets": [
+                        {
+                            "name": "gpagitpull"
+                        }
+                    ],
+                    "restartPolicy": "Never",
+                    "volumes": [
+                        {
+                            "csi": {
+                                "driver": "secrets-store.csi.k8s.io",
+                                "readOnly": true,
+                                "volumeAttributes": {
+                                    "secretProviderClass": "gpa-key-crt-dev"
+                                }
+                            },
+                            "name": "gpa-privatekey-crt-dev"
+                        },
+                        {
+                            "csi": {
+                                "driver": "secrets-store.csi.k8s.io",
+                                "readOnly": true,
+                                "volumeAttributes": {
+                                    "secretProviderClass": "gpa-python-interface-global-config-dev"
+                                }
+                            },
+                            "name": "gpa-global-json-dev"
+                        },
+                        {
+                            "name": "fluentd-config",
+                            "secret": {
+                                "defaultMode": 420,
+                                "secretName": "fluentd-config-test"
+                            }
+                        },
+                        {
+                            "emptyDir": {},
+                            "name": "logs-dir"
+                        },
+                        {
+                            "emptyDir": {},
+                            "name": "modeln-cert"
+                        },
+                        {
+                            "emptyDir": {},
+                            "name": "exit-signals"
+                        }
+                    ]
+                }
+            },
+            "ttlSecondsAfterFinished": 20
+        }
+    }
+}
+
+TASK [Get Kuberentes Job Run Status using Azure AD Token] **********************
+ok: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "getK8sJobStatus.status": "404"
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Delete Kuberentes Job Only if its in Completed State] ********************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Create Kuberentes Job using Azure AD Token] ******************************
+ok: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "createK8sJobResponse": {
+        "audit_id": "a5ade856-ebc5-4c84-b984-737a6edbdb42",
+        "cache_control": "no-cache, private",
+        "changed": false,
+        "connection": "close",
+        "content": "{\\"kind\\":\\"Job\\",\\"apiVersion\\":\\"batch/v1\\",\\"metadata\\":{\\"name\\":\\"ui-aamp-alerts-dev\\",\\"namespace\\":\\"ph-gpa\\",\\"uid\\":\\"56e706e8-2c89-4099-8bb0-3fd719f370af\\",\\"resourceVersion\\":\\"611304000\\",\\"generation\\":1,\\"creationTimestamp\\":\\"2026-07-31T01:30:56Z\\",\\"labels\\":{\\"app\\":\\"ui-aamp-alerts\\",\\"deployment\\":\\"v1\\",\\"environment\\":\\"dev\\"},\\"managedFields\\":[{\\"manager\\":\\"ansible-httpget\\",\\"operation\\":\\"Update\\",\\"apiVersion\\":\\"batch/v1\\",\\"time\\":\\"2026-07-31T01:30:56Z\\",\\"fieldsType\\":\\"FieldsV1\\",\\"fieldsV1\\":{\\"f:metadata\\":{\\"f:labels\\":{\\".\\":{},\\"f:app\\":{},\\"f:deployment\\":{},\\"f:environment\\":{}}},\\"f:spec\\":{\\"f:backoffLimit\\":{},\\"f:completionMode\\":{},\\"f:completions\\":{},\\"f:manualSelector\\":{},\\"f:parallelism\\":{},\\"f:podReplacementPolicy\\":{},\\"f:suspend\\":{},\\"f:template\\":{\\"f:metadata\\":{\\"f:name\\":{},\\"f:namespace\\":{}},\\"f:spec\\":{\\"f:containers\\":{\\"k:{\\\\\\"name\\\\\\":\\\\\\"fluentd\\\\\\"}\\":{\\".\\":{},\\"f:args\\":{},\\"f:command\\":{},\\"f:env\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"FLUENT_UID\\\\\\"}\\":{\\".\\":{},\\"f:name\\":{},\\"f:value\\":{}}},\\"f:image\\":{},\\"f:imagePullPolicy\\":{},\\"f:name\\":{},\\"f:resources\\":{},\\"f:terminationMessagePath\\":{},\\"f:terminationMessagePolicy\\":{},\\"f:volumeMounts\\":{\\".\\":{},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/certificates\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{},\\"f:readOnly\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/fluentd/etc/fluent.conf\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{},\\"f:subPath\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/home/interface/logs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/opt/exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}}}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"gpa-interface-container\\\\\\"}\\":{\\".\\":{},\\"f:args\\":{},\\"f:command\\":{},\\"f:env\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"global_config_path\\\\\\"}\\":{\\".\\":{},\\"f:name\\":{},\\"f:value\\":{}}},\\"f:image\\":{},\\"f:imagePullPolicy\\":{},\\"f:name\\":{},\\"f:resources\\":{},\\"f:terminationMessagePath\\":{},\\"f:terminationMessagePolicy\\":{},\\"f:volumeMounts\\":{\\".\\":{},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/certificates\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{},\\"f:readOnly\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/configs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{},\\"f:readOnly\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/home/interface/keyvault\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/home/interface/logs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/opt/exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}}}}},\\"f:dnsPolicy\\":{},\\"f:imagePullSecrets\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"gpagitpull\\\\\\"}\\":{}},\\"f:restartPolicy\\":{},\\"f:schedulerName\\":{},\\"f:securityContext\\":{},\\"f:terminationGracePeriodSeconds\\":{},\\"f:volumes\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:emptyDir\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"fluentd-config\\\\\\"}\\":{\\".\\":{},\\"f:name\\":{},\\"f:secret\\":{\\".\\":{},\\"f:defaultMode\\":{},\\"f:secretName\\":{}}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"gpa-global-json-dev\\\\\\"}\\":{\\".\\":{},\\"f:csi\\":{\\".\\":{},\\"f:driver\\":{},\\"f:readOnly\\":{},\\"f:volumeAttributes\\":{\\".\\":{},\\"f:secretProviderClass\\":{}}},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"gpa-privatekey-crt-dev\\\\\\"}\\":{\\".\\":{},\\"f:csi\\":{\\".\\":{},\\"f:driver\\":{},\\"f:readOnly\\":{},\\"f:volumeAttributes\\":{\\".\\":{},\\"f:secretProviderClass\\":{}}},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"logs-dir\\\\\\"}\\":{\\".\\":{},\\"f:emptyDir\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"modeln-cert\\\\\\"}\\":{\\".\\":{},\\"f:emptyDir\\":{},\\"f:name\\":{}}}}},\\"f:ttlSecondsAfterFinished\\":{}}}}]},\\"spec\\":{\\"parallelism\\":1,\\"completions\\":1,\\"backoffLimit\\":0,\\"selector\\":{\\"matchLabels\\":{\\"batch.kubernetes.io/controller-uid\\":\\"56e706e8-2c89-4099-8bb0-3fd719f370af\\"}},\\"manualSelector\\":false,\\"template\\":{\\"metadata\\":{\\"name\\":\\"ui-aamp-alerts\\",\\"namespace\\":\\"ph-gpa\\",\\"labels\\":{\\"batch.kubernetes.io/controller-uid\\":\\"56e706e8-2c89-4099-8bb0-3fd719f370af\\",\\"batch.kubernetes.io/job-name\\":\\"ui-aamp-alerts-dev\\",\\"controller-uid\\":\\"56e706e8-2c89-4099-8bb0-3fd719f370af\\",\\"job-name\\":\\"ui-aamp-alerts-dev\\"}},\\"spec\\":{\\"volumes\\":[{\\"name\\":\\"gpa-privatekey-crt-dev\\",\\"csi\\":{\\"driver\\":\\"secrets-store.csi.k8s.io\\",\\"readOnly\\":true,\\"volumeAttributes\\":{\\"secretProviderClass\\":\\"gpa-key-crt-dev\\"}}},{\\"name\\":\\"gpa-global-json-dev\\",\\"csi\\":{\\"driver\\":\\"secrets-store.csi.k8s.io\\",\\"readOnly\\":true,\\"volumeAttributes\\":{\\"secretProviderClass\\":\\"gpa-python-interface-global-config-dev\\"}}},{\\"name\\":\\"fluentd-config\\",\\"secret\\":{\\"secretName\\":\\"fluentd-config-test\\",\\"defaultMode\\":420}},{\\"name\\":\\"logs-dir\\",\\"emptyDir\\":{}},{\\"name\\":\\"modeln-cert\\",\\"emptyDir\\":{}},{\\"name\\":\\"exit-signals\\",\\"emptyDir\\":{}}],\\"containers\\":[{\\"name\\":\\"gpa-interface-container\\",\\"image\\":\\"ghcr.io/gsk-tech/gpa/py-inter-awx-non-root:20260729.2@sha256:c28829761d4838427cf9b50f9b375759bf8ffef1287f1a9e0969a0acd4abab0a\\",\\"command\\":[\\"/bin/sh\\"],\\"args\\":[\\"-c\\",\\"python /usr/src/interface/Interface/Python/Interfaces/Ui_Aamp_Alerts/Ui_Aamp_alerts.py\\\\nexit_code=$?\\\\nif [ $exit_code -ne 0 ]\\\\nthen\\\\n  echo -n \\\\\\"success\\\\\\" \\\\u003e /opt/exit-signals/exit\\\\nelse\\\\n  echo -n \\\\\\"failure\\\\\\" \\\\u003e  /opt/exit-signals/exit\\\\nfi\\\\nexit $exit_code\\\\n\\"],\\"env\\":[{\\"name\\":\\"global_config_path\\",\\"value\\":\\"/etc/configs\\"}],\\"resources\\":{},\\"volumeMounts\\":[{\\"name\\":\\"exit-signals\\",\\"mountPath\\":\\"/opt/exit-signals\\"},{\\"name\\":\\"gpa-privatekey-crt-dev\\",\\"readOnly\\":true,\\"mountPath\\":\\"/etc/certificates\\"},{\\"name\\":\\"gpa-global-json-dev\\",\\"readOnly\\":true,\\"mountPath\\":\\"/etc/configs\\"},{\\"name\\":\\"logs-dir\\",\\"mountPath\\":\\"/home/interface/logs\\"},{\\"name\\":\\"modeln-cert\\",\\"mountPath\\":\\"/home/interface/keyvault\\"}],\\"terminationMessagePath\\":\\"/dev/termination-log\\",\\"terminationMessagePolicy\\":\\"File\\",\\"imagePullPolicy\\":\\"IfNotPresent\\"},{\\"name\\":\\"fluentd\\",\\"image\\":\\"ghcr.io/gsk-tech/gpa/fluentd-elk:v1\\",\\"command\\":[\\"/bin/sh\\",\\"-c\\"],\\"args\\":[\\"fluentd -c /fluentd/etc/fluent.conf \\\\u0026\\\\nuntil [ -f /opt/exit-signals/exit ]\\\\ndo\\\\n  sleep 5\\\\ndone\\\\necho \\\\\\"Exiting Side car Container\\\\\\"\\\\nexit 0\\\\n\\"],\\"env\\":[{\\"name\\":\\"FLUENT_UID\\",\\"value\\":\\"0\\"}],\\"resources\\":{},\\"volumeMounts\\":[{\\"name\\":\\"gpa-privatekey-crt-dev\\",\\"readOnly\\":true,\\"mountPath\\":\\"/etc/certificates\\"},{\\"name\\":\\"fluentd-config\\",\\"mountPath\\":\\"/fluentd/etc/fluent.conf\\",\\"subPath\\":\\"fluent.conf\\"},{\\"name\\":\\"logs-dir\\",\\"mountPath\\":\\"/home/interface/logs\\"},{\\"name\\":\\"exit-signals\\",\\"mountPath\\":\\"/opt/exit-signals\\"}],\\"terminationMessagePath\\":\\"/dev/termination-log\\",\\"terminationMessagePolicy\\":\\"File\\",\\"imagePullPolicy\\":\\"IfNotPresent\\"}],\\"restartPolicy\\":\\"Never\\",\\"terminationGracePeriodSeconds\\":30,\\"dnsPolicy\\":\\"ClusterFirst\\",\\"securityContext\\":{},\\"imagePullSecrets\\":[{\\"name\\":\\"gpagitpull\\"}],\\"schedulerName\\":\\"default-scheduler\\"}},\\"ttlSecondsAfterFinished\\":20,\\"completionMode\\":\\"NonIndexed\\",\\"suspend\\":false,\\"podReplacementPolicy\\":\\"TerminatingOrFailed\\"},\\"status\\":{}}\\n",
+        "content_type": "application/json",
+        "cookies": {},
+        "cookies_string": "",
+        "date": "Fri, 31 Jul 2026 01:30:56 GMT",
+        "elapsed": 0,
+        "failed": false,
+        "json": {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "creationTimestamp": "2026-07-31T01:30:56Z",
+                "generation": 1,
+                "labels": {
+                    "app": "ui-aamp-alerts",
+                    "deployment": "v1",
+                    "environment": "dev"
+                },
+                "managedFields": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:labels": {
+                                    ".": {},
+                                    "f:app": {},
+                                    "f:deployment": {},
+                                    "f:environment": {}
+                                }
+                            },
+                            "f:spec": {
+                                "f:backoffLimit": {},
+                                "f:completionMode": {},
+                                "f:completions": {},
+                                "f:manualSelector": {},
+                                "f:parallelism": {},
+                                "f:podReplacementPolicy": {},
+                                "f:suspend": {},
+                                "f:template": {
+                                    "f:metadata": {
+                                        "f:name": {},
+                                        "f:namespace": {}
+                                    },
+                                    "f:spec": {
+                                        "f:containers": {
+                                            "k:{\\"name\\":\\"fluentd\\"}": {
+                                                ".": {},
+                                                "f:args": {},
+                                                "f:command": {},
+                                                "f:env": {
+                                                    ".": {},
+                                                    "k:{\\"name\\":\\"FLUENT_UID\\"}": {
+                                                        ".": {},
+                                                        "f:name": {},
+                                                        "f:value": {}
+                                                    }
+                                                },
+                                                "f:image": {},
+                                                "f:imagePullPolicy": {},
+                                                "f:name": {},
+                                                "f:resources": {},
+                                                "f:terminationMessagePath": {},
+                                                "f:terminationMessagePolicy": {},
+                                                "f:volumeMounts": {
+                                                    ".": {},
+                                                    "k:{\\"mountPath\\":\\"/etc/certificates\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {},
+                                                        "f:readOnly": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/fluentd/etc/fluent.conf\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {},
+                                                        "f:subPath": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/home/interface/logs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/opt/exit-signals\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    }
+                                                }
+                                            },
+                                            "k:{\\"name\\":\\"gpa-interface-container\\"}": {
+                                                ".": {},
+                                                "f:args": {},
+                                                "f:command": {},
+                                                "f:env": {
+                                                    ".": {},
+                                                    "k:{\\"name\\":\\"global_config_path\\"}": {
+                                                        ".": {},
+                                                        "f:name": {},
+                                                        "f:value": {}
+                                                    }
+                                                },
+                                                "f:image": {},
+                                                "f:imagePullPolicy": {},
+                                                "f:name": {},
+                                                "f:resources": {},
+                                                "f:terminationMessagePath": {},
+                                                "f:terminationMessagePolicy": {},
+                                                "f:volumeMounts": {
+                                                    ".": {},
+                                                    "k:{\\"mountPath\\":\\"/etc/certificates\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {},
+                                                        "f:readOnly": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/etc/configs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {},
+                                                        "f:readOnly": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/home/interface/keyvault\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/home/interface/logs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/opt/exit-signals\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "f:dnsPolicy": {},
+                                        "f:imagePullSecrets": {
+                                            ".": {},
+                                            "k:{\\"name\\":\\"gpagitpull\\"}": {}
+                                        },
+                                        "f:restartPolicy": {},
+                                        "f:schedulerName": {},
+                                        "f:securityContext": {},
+                                        "f:terminationGracePeriodSeconds": {},
+                                        "f:volumes": {
+                                            ".": {},
+                                            "k:{\\"name\\":\\"exit-signals\\"}": {
+                                                ".": {},
+                                                "f:emptyDir": {},
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"fluentd-config\\"}": {
+                                                ".": {},
+                                                "f:name": {},
+                                                "f:secret": {
+                                                    ".": {},
+                                                    "f:defaultMode": {},
+                                                    "f:secretName": {}
+                                                }
+                                            },
+                                            "k:{\\"name\\":\\"gpa-global-json-dev\\"}": {
+                                                ".": {},
+                                                "f:csi": {
+                                                    ".": {},
+                                                    "f:driver": {},
+                                                    "f:readOnly": {},
+                                                    "f:volumeAttributes": {
+                                                        ".": {},
+                                                        "f:secretProviderClass": {}
+                                                    }
+                                                },
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"gpa-privatekey-crt-dev\\"}": {
+                                                ".": {},
+                                                "f:csi": {
+                                                    ".": {},
+                                                    "f:driver": {},
+                                                    "f:readOnly": {},
+                                                    "f:volumeAttributes": {
+                                                        ".": {},
+                                                        "f:secretProviderClass": {}
+                                                    }
+                                                },
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"logs-dir\\"}": {
+                                                ".": {},
+                                                "f:emptyDir": {},
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"modeln-cert\\"}": {
+                                                ".": {},
+                                                "f:emptyDir": {},
+                                                "f:name": {}
+                                            }
+                                        }
+                                    }
+                                },
+                                "f:ttlSecondsAfterFinished": {}
+                            }
+                        },
+                        "manager": "ansible-httpget",
+                        "operation": "Update",
+                        "time": "2026-07-31T01:30:56Z"
+                    }
+                ],
+                "name": "ui-aamp-alerts-dev",
+                "namespace": "ph-gpa",
+                "resourceVersion": "611304000",
+                "uid": "56e706e8-2c89-4099-8bb0-3fd719f370af"
+            },
+            "spec": {
+                "backoffLimit": 0,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "56e706e8-2c89-4099-8bb0-3fd719f370af"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "56e706e8-2c89-4099-8bb0-3fd719f370af",
+                            "batch.kubernetes.io/job-name": "ui-aamp-alerts-dev",
+                            "controller-uid": "56e706e8-2c89-4099-8bb0-3fd719f370af",
+                            "job-name": "ui-aamp-alerts-dev"
+                        },
+                        "name": "ui-aamp-alerts",
+                        "namespace": "ph-gpa"
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "-c",
+                                    "python /usr/src/interface/Interface/Python/Interfaces/Ui_Aamp_Alerts/Ui_Aamp_alerts.py\\nexit_code=$?\\nif [ $exit_code -ne 0 ]\\nthen\\n  echo -n \\"success\\" > /opt/exit-signals/exit\\nelse\\n  echo -n \\"failure\\" >  /opt/exit-signals/exit\\nfi\\nexit $exit_code\\n"
+                                ],
+                                "command": [
+                                    "/bin/sh"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "global_config_path",
+                                        "value": "/etc/configs"
+                                    }
+                                ],
+                                "image": "ghcr.io/gsk-tech/gpa/py-inter-awx-non-root:20260729.2@sha256:c28829761d4838427cf9b50f9b375759bf8ffef1287f1a9e0969a0acd4abab0a",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "gpa-interface-container",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/opt/exit-signals",
+                                        "name": "exit-signals"
+                                    },
+                                    {
+                                        "mountPath": "/etc/certificates",
+                                        "name": "gpa-privatekey-crt-dev",
+                                        "readOnly": true
+                                    },
+                                    {
+                                        "mountPath": "/etc/configs",
+                                        "name": "gpa-global-json-dev",
+                                        "readOnly": true
+                                    },
+                                    {
+                                        "mountPath": "/home/interface/logs",
+                                        "name": "logs-dir"
+                                    },
+                                    {
+                                        "mountPath": "/home/interface/keyvault",
+                                        "name": "modeln-cert"
+                                    }
+                                ]
+                            },
+                            {
+                                "args": [
+                                    "fluentd -c /fluentd/etc/fluent.conf &\\nuntil [ -f /opt/exit-signals/exit ]\\ndo\\n  sleep 5\\ndone\\necho \\"Exiting Side car Container\\"\\nexit 0\\n"
+                                ],
+                                "command": [
+                                    "/bin/sh",
+                                    "-c"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "FLUENT_UID",
+                                        "value": "0"
+                                    }
+                                ],
+                                "image": "ghcr.io/gsk-tech/gpa/fluentd-elk:v1",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "fluentd",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/etc/certificates",
+                                        "name": "gpa-privatekey-crt-dev",
+                                        "readOnly": true
+                                    },
+                                    {
+                                        "mountPath": "/fluentd/etc/fluent.conf",
+                                        "name": "fluentd-config",
+                                        "subPath": "fluent.conf"
+                                    },
+                                    {
+                                        "mountPath": "/home/interface/logs",
+                                        "name": "logs-dir"
+                                    },
+                                    {
+                                        "mountPath": "/opt/exit-signals",
+                                        "name": "exit-signals"
+                                    }
+                                ]
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "imagePullSecrets": [
+                            {
+                                "name": "gpagitpull"
+                            }
+                        ],
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30,
+                        "volumes": [
+                            {
+                                "csi": {
+                                    "driver": "secrets-store.csi.k8s.io",
+                                    "readOnly": true,
+                                    "volumeAttributes": {
+                                        "secretProviderClass": "gpa-key-crt-dev"
+                                    }
+                                },
+                                "name": "gpa-privatekey-crt-dev"
+                            },
+                            {
+                                "csi": {
+                                    "driver": "secrets-store.csi.k8s.io",
+                                    "readOnly": true,
+                                    "volumeAttributes": {
+                                        "secretProviderClass": "gpa-python-interface-global-config-dev"
+                                    }
+                                },
+                                "name": "gpa-global-json-dev"
+                            },
+                            {
+                                "name": "fluentd-config",
+                                "secret": {
+                                    "defaultMode": 420,
+                                    "secretName": "fluentd-config-test"
+                                }
+                            },
+                            {
+                                "emptyDir": {},
+                                "name": "logs-dir"
+                            },
+                            {
+                                "emptyDir": {},
+                                "name": "modeln-cert"
+                            },
+                            {
+                                "emptyDir": {},
+                                "name": "exit-signals"
+                            }
+                        ]
+                    }
+                },
+                "ttlSecondsAfterFinished": 20
+            },
+            "status": {}
+        },
+        "msg": "OK (unknown bytes)",
+        "redirected": false,
+        "status": 201,
+        "transfer_encoding": "chunked",
+        "url": "https://gsk-aks-cluster-ovejrxao.hcp.eastus2.azmk8s.io:443/apis/batch/v1/namespaces/ph-gpa/jobs",
+        "x_kubernetes_pf_flowschema_uid": "2825855f-8696-4498-acef-bc13a17d3b95",
+        "x_kubernetes_pf_prioritylevel_uid": "9fd45612-56a9-40fb-bd5e-c03972200839"
+    }
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "msg": "Job successfully created"
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Call servicenow API when job failed] *************************************
+skipping: [localhost]
+
+TASK [Check job running status] ************************************************
+skipping: [localhost]
+
+TASK [Run scheduled job post tasks] ********************************************
+
+TASK [Update the job status as Success based on job exection status] ***********
+
+TASK [dbupdate : Insert log data] **********************************************
+changed: [localhost]
+
+TASK [dbupdate : Updated new status to Job table] ******************************
+ok: [localhost]
+
+TASK [dbupdate : Notify child jobs about parent jobs run status] ***************
+ok: [localhost]
+
+TASK [dbupdate : To Make sure current job wait for parant job to run] **********
+ok: [localhost]
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=20   changed=2    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+
