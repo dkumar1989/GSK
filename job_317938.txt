@@ -1,0 +1,627 @@
+Identity added: /runner/artifacts/317938/ssh_key_data (crsopr@us6sxlx00853)
+/usr/local/lib/python3.8/site-packages/paramiko/transport.py:236: CryptographyDeprecationWarning: Blowfish has been deprecated
+  "class": algorithms.Blowfish,
+Vault password (dbpwd-nonprod): 
+Vault password: 
+[WARNING]: Found variable using reserved name: namespace
+
+PLAY [all] *********************************************************************
+
+TASK [inlcude secrets] *********************************************************
+ok: [localhost]
+
+TASK [Run scheduled job pre tasks] *********************************************
+
+TASK [Set Jop Enviroment details of the job] ***********************************
+
+TASK [setenv : SET ENVIRONMENT] ************************************************
+ok: [localhost]
+
+TASK [Check AWX Downtime] ******************************************************
+
+TASK [Checking AWX Downtime] ***************************************************
+
+TASK [dbselect : Processing SQL statments] *************************************
+ok: [localhost]
+
+TASK [checkdowntime : Process exception result] ********************************
+ok: [localhost]
+
+TASK [checkdowntime : Stop the job when current time is AWX downtime] **********
+skipping: [localhost]
+
+TASK [checkdowntime : Stop the job when current time is AWX downtime] **********
+skipping: [localhost]
+
+TASK [Check current date and time belongs job running time interval] ***********
+skipping: [localhost]
+
+TASK [Checking wether we can run same KSH multiple times] **********************
+skipping: [localhost]
+
+TASK [Update the job status as running] ****************************************
+
+TASK [dbupdate : Insert log data] **********************************************
+changed: [localhost]
+
+TASK [dbupdate : Updated new status to Job table] ******************************
+ok: [localhost]
+
+TASK [dbupdate : Notify child jobs about parent jobs run status] ***************
+skipping: [localhost]
+
+TASK [dbupdate : To Make sure current job wait for parant job to run] **********
+skipping: [localhost]
+
+TASK [Call kubernetes] *********************************************************
+included: /runner/project/awxjobtemplate/kubelet_api_job_create.yml for localhost
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "createJobTemplate": {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+            "labels": {
+                "app": "list-builder-test-interface",
+                "deployment": "v1",
+                "environment": "dev"
+            },
+            "name": "list-builder-test-interface-dev",
+            "namespace": "listbuilder-devtest"
+        },
+        "spec": {
+            "backoffLimit": 0,
+            "template": {
+                "metadata": {
+                    "name": "list-builder-test-interface",
+                    "namespace": "listbuilder-devtest"
+                },
+                "spec": {
+                    "containers": [
+                        {
+                            "args": [
+                                "-c",
+                                "(while ! ls /etc/logs/*.txt >/dev/null 2>&1; do sleep 1; done; tail -F /etc/logs/*.txt) 2>/dev/null &\\nlog_tail_pid=$!\\ndotnet /app/TestLB.dll\\nexit_code=$?\\nsleep 2\\nif [ $exit_code -eq 0 ]\\nthen\\n  echo -n \\"success\\" > /opt/exit-signals/exit\\nelse\\n  echo -n \\"failure\\" > /opt/exit-signals/exit\\nfi\\nkill \\"$log_tail_pid\\" 2>/dev/null || true\\nexit $exit_code\\n"
+                            ],
+                            "command": [
+                                "/bin/sh"
+                            ],
+                            "env": [
+                                {
+                                    "name": "GlobalConfigPath",
+                                    "value": "/etc/configs"
+                                }
+                            ],
+                            "image": "ghcr.io/gsk-tech/list-builder-dotnet-non-root:20261001.1",
+                            "imagePullPolicy": "IfNotPresent",
+                            "name": "lb-interface-container",
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/opt/exit-signals",
+                                    "name": "exit-signals"
+                                },
+                                {
+                                    "mountPath": "/etc/configs",
+                                    "name": "lb-interface-json-configs-dev"
+                                },
+                                {
+                                    "mountPath": "/etc/certificates",
+                                    "name": "lb-privatekey-crt-dev"
+                                },
+                                {
+                                    "mountPath": "/etc/logs",
+                                    "name": "logs-dir"
+                                }
+                            ]
+                        },
+                        {
+                            "args": [
+                                "fluentd -c /fluentd/etc/fluent.conf &\\nuntil [ -f /opt/exit-signals/exit ]\\ndo\\n  sleep 5\\ndone\\necho \\"Exiting Side car Container\\"\\nexit 0\\n"
+                            ],
+                            "command": [
+                                "/bin/sh",
+                                "-c"
+                            ],
+                            "env": [
+                                {
+                                    "name": "FLUENT_UID",
+                                    "value": "0"
+                                }
+                            ],
+                            "image": "ghcr.io/gsk-tech/cars-saas/fluentd-elk:v1",
+                            "imagePullPolicy": "IfNotPresent",
+                            "name": "fluentd",
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/etc/certificates",
+                                    "name": "lb-privatekey-crt-dev"
+                                },
+                                {
+                                    "mountPath": "/fluentd/etc/fluent.conf",
+                                    "name": "lb-interface-json-configs-dev",
+                                    "subPath": "fluent.conf"
+                                },
+                                {
+                                    "mountPath": "/etc/logs",
+                                    "name": "logs-dir"
+                                },
+                                {
+                                    "mountPath": "/opt/exit-signals",
+                                    "name": "exit-signals"
+                                }
+                            ]
+                        }
+                    ],
+                    "imagePullSecrets": [
+                        {
+                            "name": "listbuildergitpull"
+                        }
+                    ],
+                    "restartPolicy": "Never",
+                    "volumes": [
+                        {
+                            "csi": {
+                                "driver": "secrets-store.csi.k8s.io",
+                                "readOnly": true,
+                                "volumeAttributes": {
+                                    "secretProviderClass": "lb-privatekey-crt-dev"
+                                }
+                            },
+                            "name": "lb-privatekey-crt-dev"
+                        },
+                        {
+                            "csi": {
+                                "driver": "secrets-store.csi.k8s.io",
+                                "readOnly": true,
+                                "volumeAttributes": {
+                                    "secretProviderClass": "lb-interface-config-dev"
+                                }
+                            },
+                            "name": "lb-interface-json-configs-dev"
+                        },
+                        {
+                            "emptyDir": {},
+                            "name": "logs-dir"
+                        },
+                        {
+                            "emptyDir": {},
+                            "name": "exit-signals"
+                        }
+                    ]
+                }
+            },
+            "ttlSecondsAfterFinished": 20
+        }
+    }
+}
+
+TASK [Generate Azure AD Bearer Token using Client Credentials] *****************
+ok: [localhost]
+
+TASK [Set Azure AD Bearer Token fact] ******************************************
+ok: [localhost]
+
+TASK [Get Kuberentes Job Run Status using Azure AD Token] **********************
+ok: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "getK8sJobStatus.status": "404"
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Delete Kuberentes Job Only if its in Completed State] ********************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Create Kuberentes Job using Azure AD Token] ******************************
+ok: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "createK8sJobResponse": {
+        "audit_id": "2980ce30-8b7b-4d1b-b5bc-ee8183e84c5b",
+        "cache_control": "no-cache, private",
+        "changed": false,
+        "connection": "close",
+        "content": "{\\"kind\\":\\"Job\\",\\"apiVersion\\":\\"batch/v1\\",\\"metadata\\":{\\"name\\":\\"list-builder-test-interface-dev\\",\\"namespace\\":\\"listbuilder-devtest\\",\\"uid\\":\\"4fcb7a9c-be9c-4b26-8593-847742bf3e99\\",\\"resourceVersion\\":\\"1490522722\\",\\"generation\\":1,\\"creationTimestamp\\":\\"2026-10-05T09:41:21Z\\",\\"labels\\":{\\"app\\":\\"list-builder-test-interface\\",\\"deployment\\":\\"v1\\",\\"environment\\":\\"dev\\"},\\"managedFields\\":[{\\"manager\\":\\"ansible-httpget\\",\\"operation\\":\\"Update\\",\\"apiVersion\\":\\"batch/v1\\",\\"time\\":\\"2026-10-05T09:41:21Z\\",\\"fieldsType\\":\\"FieldsV1\\",\\"fieldsV1\\":{\\"f:metadata\\":{\\"f:labels\\":{\\".\\":{},\\"f:app\\":{},\\"f:deployment\\":{},\\"f:environment\\":{}}},\\"f:spec\\":{\\"f:backoffLimit\\":{},\\"f:completionMode\\":{},\\"f:completions\\":{},\\"f:manualSelector\\":{},\\"f:parallelism\\":{},\\"f:podReplacementPolicy\\":{},\\"f:suspend\\":{},\\"f:template\\":{\\"f:metadata\\":{\\"f:name\\":{},\\"f:namespace\\":{}},\\"f:spec\\":{\\"f:containers\\":{\\"k:{\\\\\\"name\\\\\\":\\\\\\"fluentd\\\\\\"}\\":{\\".\\":{},\\"f:args\\":{},\\"f:command\\":{},\\"f:env\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"FLUENT_UID\\\\\\"}\\":{\\".\\":{},\\"f:name\\":{},\\"f:value\\":{}}},\\"f:image\\":{},\\"f:imagePullPolicy\\":{},\\"f:name\\":{},\\"f:resources\\":{},\\"f:terminationMessagePath\\":{},\\"f:terminationMessagePolicy\\":{},\\"f:volumeMounts\\":{\\".\\":{},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/certificates\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/logs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/fluentd/etc/fluent.conf\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{},\\"f:subPath\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/opt/exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}}}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"lb-interface-container\\\\\\"}\\":{\\".\\":{},\\"f:args\\":{},\\"f:command\\":{},\\"f:env\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"GlobalConfigPath\\\\\\"}\\":{\\".\\":{},\\"f:name\\":{},\\"f:value\\":{}}},\\"f:image\\":{},\\"f:imagePullPolicy\\":{},\\"f:name\\":{},\\"f:resources\\":{},\\"f:terminationMessagePath\\":{},\\"f:terminationMessagePolicy\\":{},\\"f:volumeMounts\\":{\\".\\":{},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/certificates\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/configs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/etc/logs\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"mountPath\\\\\\":\\\\\\"/opt/exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:mountPath\\":{},\\"f:name\\":{}}}}},\\"f:dnsPolicy\\":{},\\"f:imagePullSecrets\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"listbuildergitpull\\\\\\"}\\":{}},\\"f:restartPolicy\\":{},\\"f:schedulerName\\":{},\\"f:securityContext\\":{},\\"f:terminationGracePeriodSeconds\\":{},\\"f:volumes\\":{\\".\\":{},\\"k:{\\\\\\"name\\\\\\":\\\\\\"exit-signals\\\\\\"}\\":{\\".\\":{},\\"f:emptyDir\\":{},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"lb-interface-json-configs-dev\\\\\\"}\\":{\\".\\":{},\\"f:csi\\":{\\".\\":{},\\"f:driver\\":{},\\"f:readOnly\\":{},\\"f:volumeAttributes\\":{\\".\\":{},\\"f:secretProviderClass\\":{}}},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"lb-privatekey-crt-dev\\\\\\"}\\":{\\".\\":{},\\"f:csi\\":{\\".\\":{},\\"f:driver\\":{},\\"f:readOnly\\":{},\\"f:volumeAttributes\\":{\\".\\":{},\\"f:secretProviderClass\\":{}}},\\"f:name\\":{}},\\"k:{\\\\\\"name\\\\\\":\\\\\\"logs-dir\\\\\\"}\\":{\\".\\":{},\\"f:emptyDir\\":{},\\"f:name\\":{}}}}},\\"f:ttlSecondsAfterFinished\\":{}}}}]},\\"spec\\":{\\"parallelism\\":1,\\"completions\\":1,\\"backoffLimit\\":0,\\"selector\\":{\\"matchLabels\\":{\\"batch.kubernetes.io/controller-uid\\":\\"4fcb7a9c-be9c-4b26-8593-847742bf3e99\\"}},\\"manualSelector\\":false,\\"template\\":{\\"metadata\\":{\\"name\\":\\"list-builder-test-interface\\",\\"namespace\\":\\"listbuilder-devtest\\",\\"labels\\":{\\"batch.kubernetes.io/controller-uid\\":\\"4fcb7a9c-be9c-4b26-8593-847742bf3e99\\",\\"batch.kubernetes.io/job-name\\":\\"list-builder-test-interface-dev\\",\\"controller-uid\\":\\"4fcb7a9c-be9c-4b26-8593-847742bf3e99\\",\\"job-name\\":\\"list-builder-test-interface-dev\\"}},\\"spec\\":{\\"volumes\\":[{\\"name\\":\\"lb-privatekey-crt-dev\\",\\"csi\\":{\\"driver\\":\\"secrets-store.csi.k8s.io\\",\\"readOnly\\":true,\\"volumeAttributes\\":{\\"secretProviderClass\\":\\"lb-privatekey-crt-dev\\"}}},{\\"name\\":\\"lb-interface-json-configs-dev\\",\\"csi\\":{\\"driver\\":\\"secrets-store.csi.k8s.io\\",\\"readOnly\\":true,\\"volumeAttributes\\":{\\"secretProviderClass\\":\\"lb-interface-config-dev\\"}}},{\\"name\\":\\"logs-dir\\",\\"emptyDir\\":{}},{\\"name\\":\\"exit-signals\\",\\"emptyDir\\":{}}],\\"containers\\":[{\\"name\\":\\"lb-interface-container\\",\\"image\\":\\"ghcr.io/gsk-tech/list-builder-dotnet-non-root:20261001.1\\",\\"command\\":[\\"/bin/sh\\"],\\"args\\":[\\"-c\\",\\"(while ! ls /etc/logs/*.txt \\\\u003e/dev/null 2\\\\u003e\\\\u00261; do sleep 1; done; tail -F /etc/logs/*.txt) 2\\\\u003e/dev/null \\\\u0026\\\\nlog_tail_pid=$!\\\\ndotnet /app/TestLB.dll\\\\nexit_code=$?\\\\nsleep 2\\\\nif [ $exit_code -eq 0 ]\\\\nthen\\\\n  echo -n \\\\\\"success\\\\\\" \\\\u003e /opt/exit-signals/exit\\\\nelse\\\\n  echo -n \\\\\\"failure\\\\\\" \\\\u003e /opt/exit-signals/exit\\\\nfi\\\\nkill \\\\\\"$log_tail_pid\\\\\\" 2\\\\u003e/dev/null || true\\\\nexit $exit_code\\\\n\\"],\\"env\\":[{\\"name\\":\\"GlobalConfigPath\\",\\"value\\":\\"/etc/configs\\"}],\\"resources\\":{},\\"volumeMounts\\":[{\\"name\\":\\"exit-signals\\",\\"mountPath\\":\\"/opt/exit-signals\\"},{\\"name\\":\\"lb-interface-json-configs-dev\\",\\"mountPath\\":\\"/etc/configs\\"},{\\"name\\":\\"lb-privatekey-crt-dev\\",\\"mountPath\\":\\"/etc/certificates\\"},{\\"name\\":\\"logs-dir\\",\\"mountPath\\":\\"/etc/logs\\"}],\\"terminationMessagePath\\":\\"/dev/termination-log\\",\\"terminationMessagePolicy\\":\\"File\\",\\"imagePullPolicy\\":\\"IfNotPresent\\"},{\\"name\\":\\"fluentd\\",\\"image\\":\\"ghcr.io/gsk-tech/cars-saas/fluentd-elk:v1\\",\\"command\\":[\\"/bin/sh\\",\\"-c\\"],\\"args\\":[\\"fluentd -c /fluentd/etc/fluent.conf \\\\u0026\\\\nuntil [ -f /opt/exit-signals/exit ]\\\\ndo\\\\n  sleep 5\\\\ndone\\\\necho \\\\\\"Exiting Side car Container\\\\\\"\\\\nexit 0\\\\n\\"],\\"env\\":[{\\"name\\":\\"FLUENT_UID\\",\\"value\\":\\"0\\"}],\\"resources\\":{},\\"volumeMounts\\":[{\\"name\\":\\"lb-privatekey-crt-dev\\",\\"mountPath\\":\\"/etc/certificates\\"},{\\"name\\":\\"lb-interface-json-configs-dev\\",\\"mountPath\\":\\"/fluentd/etc/fluent.conf\\",\\"subPath\\":\\"fluent.conf\\"},{\\"name\\":\\"logs-dir\\",\\"mountPath\\":\\"/etc/logs\\"},{\\"name\\":\\"exit-signals\\",\\"mountPath\\":\\"/opt/exit-signals\\"}],\\"terminationMessagePath\\":\\"/dev/termination-log\\",\\"terminationMessagePolicy\\":\\"File\\",\\"imagePullPolicy\\":\\"IfNotPresent\\"}],\\"restartPolicy\\":\\"Never\\",\\"terminationGracePeriodSeconds\\":30,\\"dnsPolicy\\":\\"ClusterFirst\\",\\"securityContext\\":{},\\"imagePullSecrets\\":[{\\"name\\":\\"listbuildergitpull\\"}],\\"schedulerName\\":\\"default-scheduler\\"}},\\"ttlSecondsAfterFinished\\":20,\\"completionMode\\":\\"NonIndexed\\",\\"suspend\\":false,\\"podReplacementPolicy\\":\\"TerminatingOrFailed\\"},\\"status\\":{}}\\n",
+        "content_type": "application/json",
+        "cookies": {},
+        "cookies_string": "",
+        "date": "Mon, 05 Oct 2026 09:41:22 GMT",
+        "elapsed": 0,
+        "failed": false,
+        "json": {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "creationTimestamp": "2026-10-05T09:41:21Z",
+                "generation": 1,
+                "labels": {
+                    "app": "list-builder-test-interface",
+                    "deployment": "v1",
+                    "environment": "dev"
+                },
+                "managedFields": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:labels": {
+                                    ".": {},
+                                    "f:app": {},
+                                    "f:deployment": {},
+                                    "f:environment": {}
+                                }
+                            },
+                            "f:spec": {
+                                "f:backoffLimit": {},
+                                "f:completionMode": {},
+                                "f:completions": {},
+                                "f:manualSelector": {},
+                                "f:parallelism": {},
+                                "f:podReplacementPolicy": {},
+                                "f:suspend": {},
+                                "f:template": {
+                                    "f:metadata": {
+                                        "f:name": {},
+                                        "f:namespace": {}
+                                    },
+                                    "f:spec": {
+                                        "f:containers": {
+                                            "k:{\\"name\\":\\"fluentd\\"}": {
+                                                ".": {},
+                                                "f:args": {},
+                                                "f:command": {},
+                                                "f:env": {
+                                                    ".": {},
+                                                    "k:{\\"name\\":\\"FLUENT_UID\\"}": {
+                                                        ".": {},
+                                                        "f:name": {},
+                                                        "f:value": {}
+                                                    }
+                                                },
+                                                "f:image": {},
+                                                "f:imagePullPolicy": {},
+                                                "f:name": {},
+                                                "f:resources": {},
+                                                "f:terminationMessagePath": {},
+                                                "f:terminationMessagePolicy": {},
+                                                "f:volumeMounts": {
+                                                    ".": {},
+                                                    "k:{\\"mountPath\\":\\"/etc/certificates\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/etc/logs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/fluentd/etc/fluent.conf\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {},
+                                                        "f:subPath": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/opt/exit-signals\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    }
+                                                }
+                                            },
+                                            "k:{\\"name\\":\\"lb-interface-container\\"}": {
+                                                ".": {},
+                                                "f:args": {},
+                                                "f:command": {},
+                                                "f:env": {
+                                                    ".": {},
+                                                    "k:{\\"name\\":\\"GlobalConfigPath\\"}": {
+                                                        ".": {},
+                                                        "f:name": {},
+                                                        "f:value": {}
+                                                    }
+                                                },
+                                                "f:image": {},
+                                                "f:imagePullPolicy": {},
+                                                "f:name": {},
+                                                "f:resources": {},
+                                                "f:terminationMessagePath": {},
+                                                "f:terminationMessagePolicy": {},
+                                                "f:volumeMounts": {
+                                                    ".": {},
+                                                    "k:{\\"mountPath\\":\\"/etc/certificates\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/etc/configs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/etc/logs\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    },
+                                                    "k:{\\"mountPath\\":\\"/opt/exit-signals\\"}": {
+                                                        ".": {},
+                                                        "f:mountPath": {},
+                                                        "f:name": {}
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "f:dnsPolicy": {},
+                                        "f:imagePullSecrets": {
+                                            ".": {},
+                                            "k:{\\"name\\":\\"listbuildergitpull\\"}": {}
+                                        },
+                                        "f:restartPolicy": {},
+                                        "f:schedulerName": {},
+                                        "f:securityContext": {},
+                                        "f:terminationGracePeriodSeconds": {},
+                                        "f:volumes": {
+                                            ".": {},
+                                            "k:{\\"name\\":\\"exit-signals\\"}": {
+                                                ".": {},
+                                                "f:emptyDir": {},
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"lb-interface-json-configs-dev\\"}": {
+                                                ".": {},
+                                                "f:csi": {
+                                                    ".": {},
+                                                    "f:driver": {},
+                                                    "f:readOnly": {},
+                                                    "f:volumeAttributes": {
+                                                        ".": {},
+                                                        "f:secretProviderClass": {}
+                                                    }
+                                                },
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"lb-privatekey-crt-dev\\"}": {
+                                                ".": {},
+                                                "f:csi": {
+                                                    ".": {},
+                                                    "f:driver": {},
+                                                    "f:readOnly": {},
+                                                    "f:volumeAttributes": {
+                                                        ".": {},
+                                                        "f:secretProviderClass": {}
+                                                    }
+                                                },
+                                                "f:name": {}
+                                            },
+                                            "k:{\\"name\\":\\"logs-dir\\"}": {
+                                                ".": {},
+                                                "f:emptyDir": {},
+                                                "f:name": {}
+                                            }
+                                        }
+                                    }
+                                },
+                                "f:ttlSecondsAfterFinished": {}
+                            }
+                        },
+                        "manager": "ansible-httpget",
+                        "operation": "Update",
+                        "time": "2026-10-05T09:41:21Z"
+                    }
+                ],
+                "name": "list-builder-test-interface-dev",
+                "namespace": "listbuilder-devtest",
+                "resourceVersion": "1490522722",
+                "uid": "4fcb7a9c-be9c-4b26-8593-847742bf3e99"
+            },
+            "spec": {
+                "backoffLimit": 0,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "4fcb7a9c-be9c-4b26-8593-847742bf3e99"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "4fcb7a9c-be9c-4b26-8593-847742bf3e99",
+                            "batch.kubernetes.io/job-name": "list-builder-test-interface-dev",
+                            "controller-uid": "4fcb7a9c-be9c-4b26-8593-847742bf3e99",
+                            "job-name": "list-builder-test-interface-dev"
+                        },
+                        "name": "list-builder-test-interface",
+                        "namespace": "listbuilder-devtest"
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "-c",
+                                    "(while ! ls /etc/logs/*.txt >/dev/null 2>&1; do sleep 1; done; tail -F /etc/logs/*.txt) 2>/dev/null &\\nlog_tail_pid=$!\\ndotnet /app/TestLB.dll\\nexit_code=$?\\nsleep 2\\nif [ $exit_code -eq 0 ]\\nthen\\n  echo -n \\"success\\" > /opt/exit-signals/exit\\nelse\\n  echo -n \\"failure\\" > /opt/exit-signals/exit\\nfi\\nkill \\"$log_tail_pid\\" 2>/dev/null || true\\nexit $exit_code\\n"
+                                ],
+                                "command": [
+                                    "/bin/sh"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "GlobalConfigPath",
+                                        "value": "/etc/configs"
+                                    }
+                                ],
+                                "image": "ghcr.io/gsk-tech/list-builder-dotnet-non-root:20261001.1",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "lb-interface-container",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/opt/exit-signals",
+                                        "name": "exit-signals"
+                                    },
+                                    {
+                                        "mountPath": "/etc/configs",
+                                        "name": "lb-interface-json-configs-dev"
+                                    },
+                                    {
+                                        "mountPath": "/etc/certificates",
+                                        "name": "lb-privatekey-crt-dev"
+                                    },
+                                    {
+                                        "mountPath": "/etc/logs",
+                                        "name": "logs-dir"
+                                    }
+                                ]
+                            },
+                            {
+                                "args": [
+                                    "fluentd -c /fluentd/etc/fluent.conf &\\nuntil [ -f /opt/exit-signals/exit ]\\ndo\\n  sleep 5\\ndone\\necho \\"Exiting Side car Container\\"\\nexit 0\\n"
+                                ],
+                                "command": [
+                                    "/bin/sh",
+                                    "-c"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "FLUENT_UID",
+                                        "value": "0"
+                                    }
+                                ],
+                                "image": "ghcr.io/gsk-tech/cars-saas/fluentd-elk:v1",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "fluentd",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/etc/certificates",
+                                        "name": "lb-privatekey-crt-dev"
+                                    },
+                                    {
+                                        "mountPath": "/fluentd/etc/fluent.conf",
+                                        "name": "lb-interface-json-configs-dev",
+                                        "subPath": "fluent.conf"
+                                    },
+                                    {
+                                        "mountPath": "/etc/logs",
+                                        "name": "logs-dir"
+                                    },
+                                    {
+                                        "mountPath": "/opt/exit-signals",
+                                        "name": "exit-signals"
+                                    }
+                                ]
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "imagePullSecrets": [
+                            {
+                                "name": "listbuildergitpull"
+                            }
+                        ],
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30,
+                        "volumes": [
+                            {
+                                "csi": {
+                                    "driver": "secrets-store.csi.k8s.io",
+                                    "readOnly": true,
+                                    "volumeAttributes": {
+                                        "secretProviderClass": "lb-privatekey-crt-dev"
+                                    }
+                                },
+                                "name": "lb-privatekey-crt-dev"
+                            },
+                            {
+                                "csi": {
+                                    "driver": "secrets-store.csi.k8s.io",
+                                    "readOnly": true,
+                                    "volumeAttributes": {
+                                        "secretProviderClass": "lb-interface-config-dev"
+                                    }
+                                },
+                                "name": "lb-interface-json-configs-dev"
+                            },
+                            {
+                                "emptyDir": {},
+                                "name": "logs-dir"
+                            },
+                            {
+                                "emptyDir": {},
+                                "name": "exit-signals"
+                            }
+                        ]
+                    }
+                },
+                "ttlSecondsAfterFinished": 20
+            },
+            "status": {}
+        },
+        "msg": "OK (unknown bytes)",
+        "redirected": false,
+        "status": 201,
+        "transfer_encoding": "chunked",
+        "url": "https://corp-platforms-multitenant-aks-devtest-2d1b8fcf.hcp.eastus2.azmk8s.io:443/apis/batch/v1/namespaces/listbuilder-devtest/jobs",
+        "x_kubernetes_pf_flowschema_uid": "2fb5e7b2-249e-4692-9d70-caf9bace395a",
+        "x_kubernetes_pf_prioritylevel_uid": "f344bc19-e060-423a-ae7a-4cacf4536ba9"
+    }
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "msg": "Job successfully created"
+}
+
+TASK [debug] *******************************************************************
+skipping: [localhost]
+
+TASK [Call servicenow API when job failed] *************************************
+skipping: [localhost]
+
+TASK [Check job running status] ************************************************
+skipping: [localhost]
+
+TASK [Run scheduled job post tasks] ********************************************
+
+TASK [Update the job status as Success based on job exection status] ***********
+
+TASK [dbupdate : Insert log data] **********************************************
+changed: [localhost]
+
+TASK [dbupdate : Updated new status to Job table] ******************************
+ok: [localhost]
+
+TASK [dbupdate : Notify child jobs about parent jobs run status] ***************
+ok: [localhost]
+
+TASK [dbupdate : To Make sure current job wait for parant job to run] **********
+ok: [localhost]
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=19   changed=2    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+
