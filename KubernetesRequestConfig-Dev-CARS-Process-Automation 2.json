@@ -1,0 +1,166 @@
+{
+    "apiVersion": "batch/v1",
+    "kind": "Job",
+    "metadata": {
+        "name": "@InterfaceName-@Environment",
+        "namespace": "ph-cars",
+        "labels": {
+            "app": "@InterfaceName",
+            "deployment": "v1",
+            "environment": "@Environment"
+        }
+    },
+    "spec": {
+        "ttlSecondsAfterFinished": 20,
+        "backoffLimit": 0,
+        "template": {
+            "metadata": {
+                "name": "@InterfaceName",
+                "namespace": "ph-cars"
+            },
+            "spec": {
+                "restartPolicy": "Never",
+                "containers": [
+                    {
+                        "name": "cars-interface-container",
+                        "args": [
+                            "/venv/bin/python @InterfaceFileName\nexit_code=$?\nif [ $exit_code -ne 0 ]\nthen\n  echo -n \"success\" > /opt/exit-signals/exit\nelse\n  echo -n \"failure\" >  /opt/exit-signals/exit\nfi\nexit $exit_code\n"
+                        ],
+                        "command": [
+                            "/usr/bin/entrypoint.sh",
+                            "/bin/sh",
+                            "-c"
+                        ],
+                        "image": "ghcr.io/gsk-tech/cars-process-automation:20261028.5@sha256:6e7967aef489413e2360ebc98fc027dba2be645f8cfc501d129dffc49b98cb70",
+                        "imagePullPolicy": "IfNotPresent",
+                        "env": [
+                            {
+                                "name": "global_config_path",
+                                "value": "/etc/configs"
+                            }
+                        ],
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/opt/exit-signals",
+                                "name": "exit-signals"
+                            },
+                            {
+                                "mountPath": "/etc/cfkcertificates",
+                                "name": "cars-saas-cert-@Environment"
+                            },
+                            {
+                                "mountPath": "/home/interface/logs",
+                                "name": "logs-dir"
+                            },
+                            {
+                                "mountPath": "/etc/configs",
+                                "name": "cars-saas-global-json-@Environment",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/etc/certificates",
+                                "name": "cars-saas-privatekey-crt-@Environment",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/home/interface/keyvault",
+                                "name": "modeln-cert"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "fluentd",
+                        "image": "ghcr.io/gsk-tech/gpa/fluentd-elk:v1",
+                        "imagePullPolicy": "IfNotPresent",
+                        "env": [
+                            {
+                                "name": "FLUENT_UID",
+                                "value": "0"
+                            }
+                        ],
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/etc/certificates",
+                                "name": "cars-saas-privatekey-crt-@Environment",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/fluentd/etc/fluent.conf",
+                                "subPath": "fluent.conf",
+                                "name": "fluentd-config"
+                            },
+                            {
+                                "mountPath": "/home/interface/logs",
+                                "name": "logs-dir"
+                            },
+                            {
+                                "name": "exit-signals",
+                                "mountPath": "/opt/exit-signals"
+                            }
+                        ],
+                        "command": [
+                            "/bin/sh",
+                            "-c"
+                        ],
+                        "args": [
+                            "fluentd -c /fluentd/etc/fluent.conf &\nuntil [ -f /opt/exit-signals/exit ]\ndo\n  sleep 5\ndone\necho \"Exiting Side car Container\"\nexit 0\n"
+                        ]
+                    }
+                ],
+                "imagePullSecrets": [
+                    {
+                        "name": "carssaascloud"
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "cars-saas-global-json-@Environment",
+                        "csi": {
+                            "driver": "secrets-store.csi.k8s.io",
+                            "readOnly": true,
+                            "volumeAttributes": {
+                                "secretProviderClass": "cars-process-automation-global-config-@Environment"
+                            }
+                        }
+                    },
+                    {
+                        "name": "cars-saas-privatekey-crt-@Environment",
+                        "csi": {
+                            "driver": "secrets-store.csi.k8s.io",
+                            "readOnly": true,
+                            "volumeAttributes": {
+                                "secretProviderClass": "cars-saas-privatekey-crt-@Environment"
+                            }
+                        }
+                    },
+                    {
+                        "name": "cars-saas-cert-@Environment",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "cars-saas-cer-pfx-key-@Environment"
+                        }
+                    },
+                    {
+                        "name": "fluentd-config",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "cars-process-automation-fluentd"
+                        }
+                    },
+                    {
+                        "emptyDir": {},
+                        "name": "logs-dir"
+                    },
+                    {
+                        "emptyDir": {},
+                        "name": "modeln-cert"
+                    },
+                    {
+                        "emptyDir": {},
+                        "name": "exit-signals"
+                    }
+                ]
+            }
+        }
+    }
+}
